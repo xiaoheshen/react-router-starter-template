@@ -1,5 +1,5 @@
 import type { Route } from "./+types/login";
-import { Form, redirect, useNavigation, useSearchParams } from "react-router";
+import { Form, useNavigation } from "react-router";
 import { verifyAdmin } from "../../data/store";
 
 export function meta({ }: Route.MetaArgs) {
@@ -11,13 +11,16 @@ export async function action({ request }: Route.ActionArgs) {
   const password = formData.get("password") as string;
 
   if (verifyAdmin(password)) {
-    // 简单的 cookie-based session
-    const headers = new Headers();
-    headers.set(
-      "Set-Cookie",
-      `admin_token=authenticated; Path=/admin; HttpOnly; SameSite=Lax; Max-Age=86400`
-    );
-    return redirect("/admin", { headers });
+    // 直接返回 Response 设置 Cookie，避免 redirect + headers 在 Worker 的兼容问题
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        // 使用 Path=/ 确保 Cookie 在所有路径下都能发送
+        "Set-Cookie":
+          "admin_token=authenticated; Path=/; SameSite=Lax; Max-Age=86400",
+      },
+    });
   }
   return { error: "密码错误" };
 }
@@ -25,7 +28,22 @@ export async function action({ request }: Route.ActionArgs) {
 export default function Login({ actionData }: Route.ComponentProps) {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
-  const error = actionData?.error;
+
+  // 检查 actionData 是否包含 success 字段（来自 Response JSON）
+  const isSuccess =
+    actionData && typeof actionData === "object" && "success" in actionData
+      ? (actionData as { success: boolean }).success
+      : false;
+  const error =
+    actionData && typeof actionData === "object" && "error" in actionData
+      ? (actionData as { error: string }).error
+      : undefined;
+
+  // 登录成功后，前端跳转（Cookie 已由 Response 设置）
+  if (isSuccess && typeof window !== "undefined") {
+    window.location.href = "/admin";
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

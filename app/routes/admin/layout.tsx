@@ -44,7 +44,8 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    document.cookie = "admin_token=; Path=/admin; Max-Age=0";
+    // Path=/ 与登录时设置的 Cookie 路径保持一致
+    document.cookie = "admin_token=; Path=/; Max-Age=0";
     navigate("/admin/login");
   };
 
