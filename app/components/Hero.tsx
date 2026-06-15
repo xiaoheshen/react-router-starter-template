@@ -4,16 +4,28 @@ interface HeroProps {
   title: string;
   subtitle: string;
   ctaText: string;
+  backgroundImage?: string;
 }
 
-export function Hero({ title, subtitle, ctaText }: HeroProps) {
+export function Hero({ title, subtitle, ctaText, backgroundImage }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* 背景装饰 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50" />
-      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
+      {/* 背景图或装饰 */}
+      {backgroundImage ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20" />
+        </>
+      )}
 
       {/* 内容 */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pt-16">

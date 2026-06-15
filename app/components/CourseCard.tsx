@@ -13,8 +13,12 @@ export function CourseCard({ course, index }: CourseCardProps) {
       className="group block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1"
       style={{ animationDelay: `${index * 0.15}s` }}
     >
-      {/* 顶部色块 */}
-      <div className={`h-2 bg-gradient-to-r ${course.color}`} />
+      {/* 顶部色块或图片 */}
+      {course.image ? (
+        <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />
+      ) : (
+        <div className={`h-2 bg-gradient-to-r ${course.color}`} />
+      )}
 
       <div className="p-6">
         {/* 图标 */}
@@ -24,6 +28,7 @@ export function CourseCard({ course, index }: CourseCardProps) {
             {course.id === "guitar" && "🎸"}
             {course.id === "calligraphy" && "✒️"}
             {course.id === "dance" && "💃"}
+            {!["art", "guitar", "calligraphy", "dance"].includes(course.id) && "📚"}
           </span>
         </div>
 

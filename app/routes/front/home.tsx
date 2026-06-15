@@ -25,7 +25,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <Navbar />
 
       {/* Hero Section */}
-      <Hero title={hero.title} subtitle={hero.subtitle} ctaText={hero.ctaText} />
+      <Hero title={hero.title} subtitle={hero.subtitle} ctaText={hero.ctaText} backgroundImage={hero.backgroundImage} />
 
       {/* 课程概览 */}
       <section className="py-20 bg-white">

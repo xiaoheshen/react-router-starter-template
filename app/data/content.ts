@@ -1,4 +1,17 @@
 // 默认网站内容配置，后台可编辑修改
+
+export interface Teacher {
+  name: string;
+  description: string;
+  image: string;
+}
+
+export interface StudentCase {
+  name: string;
+  time: string;
+  workImage: string;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -7,6 +20,8 @@ export interface Course {
   features: string[];
   image: string;
   color: string; // tailwind color class for card accent
+  teachers: Teacher[];
+  studentCases: StudentCase[];
 }
 
 export interface SiteContent {
@@ -54,6 +69,8 @@ export const defaultContent: SiteContent = {
       features: ["素描基础", "水彩技法", "创意手工", "艺术鉴赏", "写生实践"],
       image: "",
       color: "from-pink-500 to-rose-500",
+      teachers: [],
+      studentCases: [],
     },
     {
       id: "guitar",
@@ -64,6 +81,8 @@ export const defaultContent: SiteContent = {
       features: ["乐理基础", "和弦弹奏", "指弹技巧", "流行弹唱", "舞台表演"],
       image: "",
       color: "from-amber-500 to-orange-500",
+      teachers: [],
+      studentCases: [],
     },
     {
       id: "calligraphy",
@@ -74,6 +93,8 @@ export const defaultContent: SiteContent = {
       features: ["硬笔书法", "软笔书法", "趣味临摹", "作品创作", "书法文化"],
       image: "",
       color: "from-emerald-500 to-teal-500",
+      teachers: [],
+      studentCases: [],
     },
     {
       id: "dance",
@@ -84,6 +105,8 @@ export const defaultContent: SiteContent = {
       features: ["中国舞", "街舞基础", "芭蕾形体", "舞蹈考级", "汇报演出"],
       image: "",
       color: "from-violet-500 to-purple-500",
+      teachers: [],
+      studentCases: [],
     },
   ],
   about: {

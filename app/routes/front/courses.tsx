@@ -39,7 +39,7 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
               id={course.id}
               className="scroll-mt-24"
             >
-              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${i % 2 === 1 ? "lg:grid-flow-dense" : ""
+              <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-start ${i % 2 === 1 ? "lg:grid-flow-dense" : ""
                 }`}>
                 <div className={i % 2 === 1 ? "lg:col-start-2" : ""}>
                   <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium text-white bg-gradient-to-r ${course.color} mb-4`}>
@@ -72,16 +72,84 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
                   </Link>
                 </div>
                 <div className={i % 2 === 1 ? "lg:col-start-1" : ""}>
-                  <div className={`aspect-square rounded-2xl bg-gradient-to-br ${course.color.replace("500", "100")} flex items-center justify-center`}>
-                    <span className="text-8xl">
-                      {course.id === "art" && "🎨"}
-                      {course.id === "guitar" && "🎸"}
-                      {course.id === "calligraphy" && "✒️"}
-                      {course.id === "dance" && "💃"}
-                    </span>
-                  </div>
+                  {course.image ? (
+                    <div
+                      className="aspect-square rounded-2xl bg-cover bg-center"
+                      style={{ backgroundImage: `url(${course.image})` }}
+                    />
+                  ) : (
+                    <div className={`aspect-square rounded-2xl bg-gradient-to-br ${course.color.replace("500", "100")} flex items-center justify-center`}>
+                      <span className="text-8xl">
+                        {course.id === "art" && "🎨"}
+                        {course.id === "guitar" && "🎸"}
+                        {course.id === "calligraphy" && "✒️"}
+                        {course.id === "dance" && "💃"}
+                        {!["art", "guitar", "calligraphy", "dance"].includes(course.id) && "📚"}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* 教师信息 */}
+              {course.teachers.length > 0 && (
+                <div className="mt-16">
+                  <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">师资力量</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {course.teachers.map((teacher, ti) => (
+                      <div key={ti} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+                        {teacher.image ? (
+                          <div
+                            className="h-48 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${teacher.image})` }}
+                          />
+                        ) : (
+                          <div className={`h-48 bg-gradient-to-br ${course.color.replace("500", "100")} flex items-center justify-center`}>
+                            <span className="text-4xl">👨‍🏫</span>
+                          </div>
+                        )}
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900">{teacher.name}</h4>
+                          {teacher.description && (
+                            <p className="text-sm text-gray-500 mt-1">{teacher.description}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 学生案例 */}
+              {course.studentCases.length > 0 && (
+                <div className="mt-16">
+                  <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">优秀学生案例</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {course.studentCases.map((sc, si) => (
+                      <div key={si} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+                        {sc.workImage ? (
+                          <div
+                            className="h-48 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${sc.workImage})` }}
+                          />
+                        ) : (
+                          <div className={`h-48 bg-gradient-to-br ${course.color.replace("500", "100")} flex items-center justify-center`}>
+                            <span className="text-4xl">🏆</span>
+                          </div>
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-gray-900">{sc.name}</h4>
+                            {sc.time && (
+                              <span className="text-xs text-gray-400">{sc.time}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

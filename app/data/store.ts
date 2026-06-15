@@ -32,6 +32,28 @@ export function resetContent(): SiteContent {
   return content;
 }
 
+// ==================== 课程管理 ====================
+
+export function addCourse(course: Omit<typeof content.courses[number], "id"> & { id?: string }): typeof content.courses[number] {
+  const newCourse = {
+    ...course,
+    id: course.id || Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    teachers: course.teachers || [],
+    studentCases: course.studentCases || [],
+  };
+  content.courses.push(newCourse as any);
+  return newCourse as any;
+}
+
+export function deleteCourse(id: string): boolean {
+  const index = content.courses.findIndex((c) => c.id === id);
+  if (index !== -1) {
+    content.courses.splice(index, 1);
+    return true;
+  }
+  return false;
+}
+
 // ==================== 咨询管理 ====================
 
 export function getInquiries(): Inquiry[] {
