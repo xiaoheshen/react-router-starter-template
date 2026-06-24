@@ -3,13 +3,13 @@ import type { Route } from "./+types/content";
 import type { SiteContent } from "../../data/content";
 
 // 获取内容
-export async function loader({ }: Route.LoaderArgs) {
-  return Response.json(getContent());
+export async function loader({ context }: Route.LoaderArgs) {
+  return Response.json(await getContent(context.cloudflare.env.DB));
 }
 
 // 更新内容
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const body = (await request.json()) as SiteContent;
-  updateContent(body);
+  await updateContent(context.cloudflare.env.DB, body);
   return Response.json({ success: true });
 }

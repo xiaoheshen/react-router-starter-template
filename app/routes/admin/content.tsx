@@ -8,22 +8,23 @@ export function meta({ }: Route.MetaArgs) {
   return [{ title: "内容管理 - 管理后台" }];
 }
 
-export function loader({ }: Route.LoaderArgs) {
-  return getContent();
+export async function loader({ context }: Route.LoaderArgs) {
+  return getContent(context.cloudflare.env.DB);
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
+  const db = context.cloudflare.env.DB;
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
 
   if (intent === "reset") {
-    resetContent();
+    await resetContent(db);
     return { success: true, message: "已恢复默认内容" };
   }
 
   if (intent === "deleteCourse") {
     const courseId = formData.get("courseId") as string;
-    deleteCourse(courseId);
+    await deleteCourse(db, courseId);
     return { success: true, message: "课程已删除" };
   }
 
@@ -31,7 +32,7 @@ export async function action({ request }: Route.ActionArgs) {
     const contentJson = formData.get("content") as string;
     try {
       const content = JSON.parse(contentJson) as SiteContent;
-      updateContent(content);
+      await updateContent(db, content);
       return { success: true, message: "保存成功" };
     } catch {
       return { error: "数据格式错误" };

@@ -6,15 +6,15 @@ export function meta({ }: Route.MetaArgs) {
   return [{ title: "客户咨询 - 管理后台" }];
 }
 
-export function loader({ }: Route.LoaderArgs) {
-  return getInquiries();
+export async function loader({ context }: Route.LoaderArgs) {
+  return getInquiries(context.cloudflare.env.DB);
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const id = formData.get("id") as string;
   if (id) {
-    deleteInquiry(id);
+    await deleteInquiry(context.cloudflare.env.DB, id);
   }
   return null;
 }

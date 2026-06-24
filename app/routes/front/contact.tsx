@@ -12,11 +12,11 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-export function loader({ }: Route.LoaderArgs) {
-  return getContent();
+export async function loader({ context }: Route.LoaderArgs) {
+  return getContent(context.cloudflare.env.DB);
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const name = formData.get("name") as string;
   const phone = formData.get("phone") as string;
@@ -27,7 +27,7 @@ export async function action({ request }: Route.ActionArgs) {
     return { error: "请填写姓名和电话" };
   }
 
-  addInquiry({ name, phone, course, message });
+  await addInquiry(context.cloudflare.env.DB, { name, phone, course, message });
   return redirect("/contact?success=1");
 }
 

@@ -5,9 +5,10 @@ export function meta({ }: Route.MetaArgs) {
   return [{ title: "仪表盘 - 管理后台" }];
 }
 
-export function loader({ }: Route.LoaderArgs) {
-  const content = getContent();
-  const inquiries = getInquiries();
+export async function loader({ context }: Route.LoaderArgs) {
+  const db = context.cloudflare.env.DB;
+  const content = await getContent(db);
+  const inquiries = await getInquiries(db);
   return {
     courseCount: content.courses.length,
     inquiryCount: inquiries.length,

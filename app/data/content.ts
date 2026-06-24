@@ -1,4 +1,5 @@
 // 默认网站内容配置，后台可编辑修改
+// D1 数据库行类型
 
 export interface Teacher {
   name: string;
@@ -50,6 +51,73 @@ export interface SiteContent {
     slogan: string;
     copyright: string;
   };
+}
+
+// D1 数据库行类型
+export interface CourseRow {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+  color: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface CourseFeatureRow {
+  id: number;
+  course_id: string;
+  feature: string;
+  sort_order: number;
+}
+
+export interface TeacherRow {
+  id: number;
+  name: string;
+  description: string;
+  image: string;
+}
+
+export interface CourseTeacherRow {
+  course_id: string;
+  teacher_id: number;
+}
+
+export interface StudentCaseRow {
+  id: number;
+  course_id: string;
+  name: string;
+  time: string;
+  work_image: string;
+}
+
+export interface SiteContentRow {
+  id: number;
+  section: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  data: string; // JSON string
+}
+
+export interface AdminUserRow {
+  id: number;
+  username: string;
+  password_hash: string;
+  email: string;
+}
+
+export interface InquiryRow {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  course_id: string;
+  message: string;
+  status: string;
+  created_at: string;
+  processed_at: string | null;
 }
 
 export const defaultContent: SiteContent = {

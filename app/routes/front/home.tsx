@@ -13,8 +13,8 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-export function loader({ }: Route.LoaderArgs) {
-  return getContent();
+export async function loader({ context }: Route.LoaderArgs) {
+  return getContent(context.cloudflare.env.DB);
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

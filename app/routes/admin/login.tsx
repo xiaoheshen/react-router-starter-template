@@ -6,17 +6,16 @@ export function meta({ }: Route.MetaArgs) {
   return [{ title: "管理员登录 - 艺术培训工作室" }];
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
   const formData = await request.formData();
   const password = formData.get("password") as string;
+  const db = context.cloudflare.env.DB;
 
-  if (verifyAdmin(password)) {
-    // 直接返回 Response 设置 Cookie，避免 redirect + headers 在 Worker 的兼容问题
+  if (await verifyAdmin(db, password)) {
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        // 使用 Path=/ 确保 Cookie 在所有路径下都能发送
         "Set-Cookie":
           "admin_token=authenticated; Path=/; SameSite=Lax; Max-Age=86400",
       },
