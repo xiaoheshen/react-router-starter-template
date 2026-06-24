@@ -118,6 +118,17 @@ async function getCourses(db: D1Database): Promise<Course[]> {
 }
 
 async function seedDefaultContent(db: D1Database): Promise<void> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      email TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
   const sections = [
     {
       section: "hero",
@@ -172,6 +183,10 @@ async function seedDefaultContent(db: D1Database): Promise<void> {
       ).bind(c.id, c.features[j], j).run();
     }
   }
+
+  await db.prepare(
+    "INSERT OR IGNORE INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)"
+  ).bind("admin", bcrypt.hashSync("admin888", 10), "admin@example.com").run();
 }
 
 export async function updateContent(db: D1Database, content: SiteContent): Promise<void> {
@@ -318,9 +333,27 @@ export async function deleteInquiry(db: D1Database, id: string): Promise<void> {
 // ==================== 管理后台认证 ====================
 
 export async function verifyAdmin(db: D1Database, password: string): Promise<boolean> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      email TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
   const result = await db.prepare(
     "SELECT password_hash FROM admin_users WHERE username = 'admin' LIMIT 1"
   ).first();
-  if (!result) return false;
+  
+  if (!result) {
+    await db.prepare(
+      "INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)"
+    ).bind("admin", bcrypt.hashSync("admin888", 10), "admin@example.com").run();
+    return password === "admin888";
+  }
+  
   return bcrypt.compareSync(password, (result as any).password_hash);
 }
