@@ -1,7 +1,86 @@
 // 数据存储层 - 使用 Cloudflare D1 数据库
 import { defaultContent, type SiteContent, type Course, type Teacher, type StudentCase } from "./content";
 import type { D1Database } from "@cloudflare/workers-types";
-import bcrypt from "bcryptjs";
+
+// ==================== 密码哈希工具（Web Crypto API） ====================
+// 使用 Cloudflare Workers 原生支持的 Web Crypto API (PBKDF2)
+// 替代 bcryptjs，避免其依赖 Node.js crypto 模块导致的兼容性问题
+
+const encoder = new TextEncoder();
+
+/**
+ * 生成密码哈希
+ * 格式: pbkdf2_sha256$iterations$salt$hash
+ */
+async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iterations = 100000;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hash = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+    key,
+    256
+  );
+  const hashHex = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const saltHex = Array.from(salt)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `pbkdf2_sha256$${iterations}$${saltHex}$${hashHex}`;
+}
+
+/**
+ * 验证密码
+ * 兼容旧版 bcrypt 哈希（$2a$、$2b$、$2y$ 前缀）和新版 PBKDF2 哈希
+ */
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  // 兼容旧版 bcrypt 哈希
+  if (storedHash.startsWith("$2")) {
+    try {
+      const bcrypt = await import("bcryptjs");
+      return bcrypt.compareSync(password, storedHash);
+    } catch {
+      console.error("bcryptjs 验证失败，哈希可能已损坏");
+      return false;
+    }
+  }
+
+  // 新版 PBKDF2 哈希
+  const parts = storedHash.split("$");
+  if (parts.length !== 4 || parts[0] !== "pbkdf2_sha256") {
+    console.error("未知的哈希格式:", storedHash.substring(0, 20));
+    return false;
+  }
+  const iterations = parseInt(parts[1], 10);
+  const saltHex = parts[2];
+  const storedHashHex = parts[3];
+  const salt = new Uint8Array(
+    saltHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+  );
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"]
+  );
+  const hash = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+    key,
+    256
+  );
+  const hashHex = Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return hashHex === storedHashHex;
+}
 
 export interface Inquiry {
   id: string;
@@ -184,9 +263,10 @@ async function seedDefaultContent(db: D1Database): Promise<void> {
     }
   }
 
+  const passwordHash = await hashPassword("admin888");
   await db.prepare(
     "INSERT OR IGNORE INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)"
-  ).bind("admin", bcrypt.hashSync("admin888", 10), "admin@example.com").run();
+  ).bind("admin", passwordHash, "admin@example.com").run();
 }
 
 export async function updateContent(db: D1Database, content: SiteContent): Promise<void> {
@@ -287,6 +367,7 @@ export async function resetContent(db: D1Database): Promise<void> {
   await db.prepare("DELETE FROM teachers").run();
   await db.prepare("DELETE FROM courses").run();
   await db.prepare("DELETE FROM site_content").run();
+  await db.prepare("DELETE FROM admin_users").run();
   await seedDefaultContent(db);
 }
 
@@ -347,13 +428,18 @@ export async function verifyAdmin(db: D1Database, password: string): Promise<boo
   const result = await db.prepare(
     "SELECT password_hash FROM admin_users WHERE username = 'admin' LIMIT 1"
   ).first();
-  
+
   if (!result) {
+    // 首次运行：创建默认管理员账户，使用 PBKDF2 哈希
+    const passwordHash = await hashPassword("admin888");
     await db.prepare(
       "INSERT INTO admin_users (username, password_hash, email) VALUES (?, ?, ?)"
-    ).bind("admin", bcrypt.hashSync("admin888", 10), "admin@example.com").run();
+    ).bind("admin", passwordHash, "admin@example.com").run();
+    console.log("已创建默认管理员账户，密码: admin888");
     return password === "admin888";
   }
-  
-  return bcrypt.compareSync(password, (result as any).password_hash);
+
+  const storedHash = (result as any).password_hash;
+  console.log("验证管理员密码，哈希前缀:", storedHash.substring(0, 20));
+  return verifyPassword(password, storedHash);
 }
