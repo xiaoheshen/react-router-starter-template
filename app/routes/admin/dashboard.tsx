@@ -8,11 +8,11 @@ export function meta({ }: Route.MetaArgs) {
 export async function loader({ context }: Route.LoaderArgs) {
   const db = context.cloudflare.env.DB;
   const content = await getContent(db);
-  const inquiries = await getInquiries(db);
+  const inquiries = await getInquiries(db, { page: 1, pageSize: 1000 });
   return {
     courseCount: content.courses.length,
-    inquiryCount: inquiries.length,
-    todayInquiries: inquiries.filter(
+    inquiryCount: inquiries.total,
+    todayInquiries: inquiries.items.filter(
       (i) => new Date(i.createdAt).toDateString() === new Date().toDateString()
     ).length,
   };

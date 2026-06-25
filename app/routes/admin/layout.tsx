@@ -1,5 +1,6 @@
 import { Outlet, NavLink, redirect, useNavigate } from "react-router";
 import type { Route } from "./+types/layout";
+import { Breadcrumb } from "../../components/Breadcrumb";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const cookie = request.headers.get("cookie") || "";
@@ -99,6 +100,7 @@ export default function AdminLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
+        <Breadcrumb />
         <Outlet />
       </main>
     </div>

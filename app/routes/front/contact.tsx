@@ -1,9 +1,9 @@
 import type { Route } from "./+types/contact";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
-import { getContent } from "../../data/store";
+import { getContent, addInquiry } from "../../data/store";
 import { Form, redirect, useNavigation } from "react-router";
-import { addInquiry } from "../../data/store";
+import { validateInquiry } from "../../data/validation";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -25,6 +25,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   if (!name || !phone) {
     return { error: "请填写姓名和电话" };
+  }
+
+  // 数据验证
+  const validation = validateInquiry({ name, phone, course, message });
+  if (!validation.valid) {
+    return { error: validation.errors.map((e) => e.message).join("；") };
   }
 
   await addInquiry(context.cloudflare.env.DB, { name, phone, course, message });

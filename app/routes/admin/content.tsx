@@ -1,8 +1,10 @@
 import type { Route } from "./+types/content";
 import { getContent, updateContent, resetContent, deleteCourse } from "../../data/store";
 import type { SiteContent, Teacher, StudentCase } from "../../data/content";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Form, useNavigation } from "react-router";
+import { ImageUploader } from "../../components/ImageUploader";
+import { validateSiteContent } from "../../data/validation";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "内容管理 - 管理后台" }];
@@ -32,61 +34,19 @@ export async function action({ request, context }: Route.ActionArgs) {
     const contentJson = formData.get("content") as string;
     try {
       const content = JSON.parse(contentJson) as SiteContent;
+      // 服务端验证
+      const validation = validateSiteContent(content);
+      if (!validation.valid) {
+        return { error: validation.errors.map((e) => e.message).join("；") };
+      }
       await updateContent(db, content);
       return { success: true, message: "保存成功" };
-    } catch {
-      return { error: "数据格式错误" };
+    } catch (err: any) {
+      return { error: err.message || "数据格式错误" };
     }
   }
 
   return { error: "未知操作" };
-}
-
-// 图片上传组件 - 转为 base64
-function ImageUpload({ value, onChange, label }: { value: string; onChange: (base64: string) => void; label: string }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="flex items-center gap-3">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-        />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          选择图片
-        </button>
-        {value && (
-          <div className="relative group">
-            <img src={value} alt="预览" className="h-16 w-16 object-cover rounded-lg border border-gray-200" />
-            <button
-              type="button"
-              onClick={() => onChange("")}
-              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              ×
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // 课程渐变色选项
@@ -299,7 +259,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
               />
             </div>
-            <ImageUpload
+            <ImageUploader
               label="首页横幅背景图片"
               value={editedContent.hero.backgroundImage}
               onChange={(base64) => updateField("hero.backgroundImage", base64)}
@@ -385,7 +345,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                 </div>
 
                 {/* 课程宣传图 */}
-                <ImageUpload
+                <ImageUploader
                   label="课程宣传图"
                   value={course.image}
                   onChange={(base64) => updateCourse(ci, "image", base64)}
@@ -474,7 +434,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                           />
                         </div>
                       </div>
-                      <ImageUpload
+                      <ImageUploader
                         label="教师照片"
                         value={teacher.image}
                         onChange={(base64) => updateTeacher(ci, ti, "image", base64)}
@@ -532,7 +492,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                           />
                         </div>
                       </div>
-                      <ImageUpload
+                      <ImageUploader
                         label="学生作品图片"
                         value={sc.workImage}
                         onChange={(base64) => updateStudentCase(ci, si, "workImage", base64)}

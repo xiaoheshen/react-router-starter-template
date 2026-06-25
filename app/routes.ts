@@ -21,4 +21,5 @@ export default [
   route("api/content", "routes/api/content.tsx"),
   route("api/inquiries", "routes/api/inquiries.tsx"),
   route("api/login", "routes/api/login.tsx"),
+  route("api/upload", "routes/api/upload.tsx"),
 ] satisfies RouteConfig;

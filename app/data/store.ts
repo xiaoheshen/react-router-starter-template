@@ -373,9 +373,44 @@ export async function deleteCourse(db: D1Database, id: string): Promise<void> {
 
 // ==================== 咨询管理 ====================
 
-export async function getInquiries(db: D1Database): Promise<Inquiry[]> {
-  const result = await db.prepare("SELECT * FROM inquiries ORDER BY created_at DESC").all();
-  return (result.results as any[]).map((r: any) => ({
+export async function getInquiries(
+  db: D1Database,
+  options?: { page?: number; pageSize?: number; search?: string; status?: string }
+): Promise<{ items: Inquiry[]; total: number; page: number; pageSize: number; totalPages: number }> {
+  const page = Math.max(1, options?.page || 1);
+  const pageSize = Math.min(100, Math.max(1, options?.pageSize || 20));
+  const search = options?.search?.trim() || "";
+  const status = options?.status || "";
+
+  // 构建查询条件
+  let whereClause = "WHERE 1=1";
+  const params: any[] = [];
+
+  if (search) {
+    whereClause += " AND (name LIKE ? OR phone LIKE ? OR message LIKE ?)";
+    const searchPattern = `%${search}%`;
+    params.push(searchPattern, searchPattern, searchPattern);
+  }
+
+  if (status) {
+    whereClause += " AND status = ?";
+    params.push(status);
+  }
+
+  // 总条数
+  const countResult = await db.prepare(
+    `SELECT COUNT(*) as total FROM inquiries ${whereClause}`
+  ).bind(...params).first();
+  const total = (countResult as any)?.total || 0;
+  const totalPages = Math.ceil(total / pageSize);
+
+  // 分页数据
+  const offset = (page - 1) * pageSize;
+  const result = await db.prepare(
+    `SELECT * FROM inquiries ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`
+  ).bind(...params, pageSize, offset).all();
+
+  const items = (result.results as any[]).map((r: any) => ({
     id: String(r.id),
     name: r.name,
     phone: r.phone,
@@ -385,6 +420,8 @@ export async function getInquiries(db: D1Database): Promise<Inquiry[]> {
     status: r.status || "pending",
     createdAt: r.created_at,
   }));
+
+  return { items, total, page, pageSize, totalPages };
 }
 
 export async function addInquiry(
@@ -398,6 +435,28 @@ export async function addInquiry(
 
 export async function deleteInquiry(db: D1Database, id: string): Promise<void> {
   await db.prepare("DELETE FROM inquiries WHERE id = ?").bind(Number(id)).run();
+}
+
+export async function batchDeleteInquiries(db: D1Database, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => "?").join(",");
+  await db.prepare(
+    `DELETE FROM inquiries WHERE id IN (${placeholders})`
+  ).bind(...ids.map(Number)).run();
+}
+
+export async function updateInquiryStatus(
+  db: D1Database,
+  id: string,
+  status: string
+): Promise<void> {
+  const validStatuses = ["pending", "contacted", "converted", "closed"];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`无效的状态值: ${status}`);
+  }
+  await db.prepare(
+    "UPDATE inquiries SET status = ?, processed_at = CURRENT_TIMESTAMP WHERE id = ?"
+  ).bind(status, Number(id)).run();
 }
 
 // ==================== 管理后台认证 ====================
