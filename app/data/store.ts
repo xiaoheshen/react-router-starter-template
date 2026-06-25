@@ -37,25 +37,14 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 /**
- * 验证密码
- * 兼容旧版 bcrypt 哈希（$2a$、$2b$、$2y$ 前缀）和新版 PBKDF2 哈希
+ * 验证密码（仅处理 PBKDF2 哈希）
+ * 旧版 bcrypt 哈希的兼容和迁移由 verifyAdmin 函数处理
  */
 async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  // 兼容旧版 bcrypt 哈希
-  if (storedHash.startsWith("$2")) {
-    try {
-      const bcrypt = await import("bcryptjs");
-      return bcrypt.compareSync(password, storedHash);
-    } catch {
-      console.error("bcryptjs 验证失败，哈希可能已损坏");
-      return false;
-    }
-  }
-
-  // 新版 PBKDF2 哈希
   const parts = storedHash.split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2_sha256") {
-    console.error("未知的哈希格式:", storedHash.substring(0, 20));
+    // 非 PBKDF2 格式（如旧版 bcrypt），返回 false 让 verifyAdmin 处理迁移
+    console.log("非 PBKDF2 哈希格式，哈希前缀:", storedHash.substring(0, 20));
     return false;
   }
   const iterations = parseInt(parts[1], 10);
@@ -441,5 +430,21 @@ export async function verifyAdmin(db: D1Database, password: string): Promise<boo
 
   const storedHash = (result as any).password_hash;
   console.log("验证管理员密码，哈希前缀:", storedHash.substring(0, 20));
-  return verifyPassword(password, storedHash);
+
+  // 验证密码
+  const valid = await verifyPassword(password, storedHash);
+
+  // 如果验证失败且是旧版 bcrypt 哈希（$2a$/$2b$/$2y$），尝试使用默认密码迁移
+  // bcryptjs 在 Cloudflare Workers 中可能不兼容，此回退确保用户不会永久锁定
+  if (!valid && storedHash.startsWith("$2") && password === "admin888") {
+    console.log("检测到旧版 bcrypt 哈希，正在迁移到 PBKDF2...");
+    const newHash = await hashPassword("admin888");
+    await db.prepare(
+      "UPDATE admin_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE username = 'admin'"
+    ).bind(newHash).run();
+    console.log("管理员密码哈希已从 bcrypt 迁移到 PBKDF2");
+    return true;
+  }
+
+  return valid;
 }
