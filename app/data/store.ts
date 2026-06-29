@@ -329,10 +329,11 @@ export async function updateContent(db: D1Database, content: SiteContent): Promi
 
     for (const teacher of c.teachers) {
       if (!teacher.name) continue;
+      // 使用 RETURNING id 获取新插入的教师 ID（比 last_row_id 更可靠）
       const result = await db.prepare(
-        "INSERT INTO teachers (name, description, image) VALUES (?, ?, ?)"
-      ).bind(teacher.name, teacher.description, teacher.image).run();
-      const teacherId = result.meta?.last_row_id;
+        "INSERT INTO teachers (name, description, image) VALUES (?, ?, ?) RETURNING id"
+      ).bind(teacher.name, teacher.description, teacher.image).first<{ id: number }>();
+      const teacherId = result?.id;
       if (teacherId) {
         await db.prepare(
           "INSERT INTO course_teachers (course_id, teacher_id) VALUES (?, ?)"

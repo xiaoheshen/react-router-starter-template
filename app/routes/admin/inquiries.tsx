@@ -5,7 +5,7 @@ import type { Route } from "./+types/inquiries";
 import { getInquiries, deleteInquiry, batchDeleteInquiries, updateInquiryStatus } from "../../data/store";
 import type { Inquiry } from "../../data/store";
 import { Form, useNavigation, useSubmit } from "react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "客户咨询 - 管理后台" }];
@@ -80,11 +80,24 @@ export default function Inquiries({ loaderData, actionData }: Route.ComponentPro
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
-    actionData?.success ? { type: "success", text: actionData.message }
-      : actionData?.error ? { type: "error", text: actionData.error }
-        : null
-  );
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // 同步 actionData 到消息状态
+  useEffect(() => {
+    if (actionData?.success) {
+      setMessage({ type: "success", text: actionData.message });
+    } else if (actionData?.error) {
+      setMessage({ type: "error", text: actionData.error });
+    }
+  }, [actionData]);
+
+  // 消息自动消失
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();

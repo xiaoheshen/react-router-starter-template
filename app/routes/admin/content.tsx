@@ -1,8 +1,8 @@
 import type { Route } from "./+types/content";
 import { getContent, updateContent, resetContent, deleteCourse } from "../../data/store";
 import type { SiteContent, Teacher, StudentCase } from "../../data/content";
-import { useState } from "react";
-import { Form, useNavigation } from "react-router";
+import { useState, useEffect, useCallback } from "react";
+import { useFetcher } from "react-router";
 import { ImageUploader } from "../../components/ImageUploader";
 import { validateSiteContent } from "../../data/validation";
 
@@ -16,6 +16,34 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export async function action({ request, context }: Route.ActionArgs) {
   const db = context.cloudflare.env.DB;
+  const contentType = request.headers.get("content-type") || "";
+
+  // 处理 JSON 请求（保存操作，支持大数据量含 base64 图片）
+  if (contentType.includes("application/json")) {
+    try {
+      const body = await request.json();
+      const intent = body.intent as string;
+
+      if (intent === "save") {
+        const content = body.content as SiteContent;
+        const validation = validateSiteContent(content);
+        if (!validation.valid) {
+          return { error: validation.errors.map((e) => e.message).join("；") };
+        }
+        await updateContent(db, content);
+        return { success: true, message: "保存成功" };
+      }
+
+      if (intent === "reset") {
+        await resetContent(db);
+        return { success: true, message: "已恢复默认内容" };
+      }
+    } catch (err: any) {
+      return { error: err.message || "数据格式错误" };
+    }
+  }
+
+  // 处理 FormData 请求（重置、删除课程等简单操作）
   const formData = await request.formData();
   const intent = formData.get("intent") as string;
 
@@ -28,22 +56,6 @@ export async function action({ request, context }: Route.ActionArgs) {
     const courseId = formData.get("courseId") as string;
     await deleteCourse(db, courseId);
     return { success: true, message: "课程已删除" };
-  }
-
-  if (intent === "save") {
-    const contentJson = formData.get("content") as string;
-    try {
-      const content = JSON.parse(contentJson) as SiteContent;
-      // 服务端验证
-      const validation = validateSiteContent(content);
-      if (!validation.valid) {
-        return { error: validation.errors.map((e) => e.message).join("；") };
-      }
-      await updateContent(db, content);
-      return { success: true, message: "保存成功" };
-    } catch (err: any) {
-      return { error: err.message || "数据格式错误" };
-    }
   }
 
   return { error: "未知操作" };
@@ -63,13 +75,49 @@ const colorOptions = [
 
 export default function ContentEditor({ loaderData, actionData }: Route.ComponentProps) {
   const content = loaderData;
-  const navigation = useNavigation();
-  const isSubmitting = navigation.state === "submitting";
+  const saveFetcher = useFetcher();
+  const resetFetcher = useFetcher();
+  const isSubmitting = saveFetcher.state === "submitting" || resetFetcher.state === "submitting";
+
   const [editedContent, setEditedContent] = useState<SiteContent>(content);
   const [activeTab, setActiveTab] = useState<string>("hero");
-  const [message, setMessage] = useState<string | null>(
-    actionData?.success ? actionData.message : actionData?.error || null
-  );
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // 同步 actionData 的消息（Form 提交的响应）
+  useEffect(() => {
+    if (actionData?.success) {
+      setMessage({ type: "success", text: actionData.message });
+    } else if (actionData?.error) {
+      setMessage({ type: "error", text: actionData.error });
+    }
+  }, [actionData]);
+
+  // 同步 saveFetcher 的消息
+  useEffect(() => {
+    if (saveFetcher.data?.success) {
+      setMessage({ type: "success", text: saveFetcher.data.message });
+    } else if (saveFetcher.data?.error) {
+      setMessage({ type: "error", text: saveFetcher.data.error });
+    }
+  }, [saveFetcher.data]);
+
+  // 同步 resetFetcher 的消息，并在重置后刷新编辑内容
+  useEffect(() => {
+    if (resetFetcher.data?.success) {
+      setMessage({ type: "success", text: resetFetcher.data.message });
+      // 重置后需要重新加载内容，暂时显示提示让用户刷新
+    } else if (resetFetcher.data?.error) {
+      setMessage({ type: "error", text: resetFetcher.data.error });
+    }
+  }, [resetFetcher.data]);
+
+  // 自动消失消息
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const tabs = [
     { key: "hero", label: "首页横幅" },
@@ -79,136 +127,219 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
     { key: "footer", label: "页脚信息" },
   ];
 
-  const updateField = (path: string, value: any) => {
-    const keys = path.split(".");
-    const newContent = structuredClone(editedContent);
-    let current: any = newContent;
-    for (let i = 0; i < keys.length - 1; i++) {
-      current = current[keys[i]];
-    }
-    current[keys[keys.length - 1]] = value;
-    setEditedContent(newContent);
-  };
+  const updateField = useCallback(
+    (path: string, value: any) => {
+      const keys = path.split(".");
+      setEditedContent((prev) => {
+        const newContent = structuredClone(prev);
+        let current: any = newContent;
+        for (let i = 0; i < keys.length - 1; i++) {
+          current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = value;
+        return newContent;
+      });
+    },
+    []
+  );
 
-  const updateCourse = (index: number, field: string, value: any) => {
-    const newContent = structuredClone(editedContent);
-    (newContent.courses[index] as any)[field] = value;
-    setEditedContent(newContent);
-  };
+  const updateCourse = useCallback((index: number, field: string, value: any) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      (newContent.courses[index] as any)[field] = value;
+      return newContent;
+    });
+  }, []);
 
-  const updateCourseFeature = (courseIndex: number, featureIndex: number, value: string) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].features[featureIndex] = value;
-    setEditedContent(newContent);
-  };
+  const updateCourseFeature = useCallback((courseIndex: number, featureIndex: number, value: string) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].features[featureIndex] = value;
+      return newContent;
+    });
+  }, []);
 
-  const addCourseFeature = (courseIndex: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].features.push("");
-    setEditedContent(newContent);
-  };
+  const addCourseFeature = useCallback((courseIndex: number) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].features.push("");
+      return newContent;
+    });
+  }, []);
 
-  const removeCourseFeature = (courseIndex: number, featureIndex: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].features.splice(featureIndex, 1);
-    setEditedContent(newContent);
-  };
+  const removeCourseFeature = useCallback((courseIndex: number, featureIndex: number) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].features.splice(featureIndex, 1);
+      return newContent;
+    });
+  }, []);
 
   // 教师管理
-  const addTeacher = (courseIndex: number) => {
-    const course = editedContent.courses[courseIndex];
-    if (course.teachers.length >= 3) return;
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].teachers.push({ name: "", description: "", image: "" });
-    setEditedContent(newContent);
-  };
+  const addTeacher = useCallback((courseIndex: number) => {
+    setEditedContent((prev) => {
+      if (prev.courses[courseIndex].teachers.length >= 3) return prev;
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].teachers.push({ name: "", description: "", image: "" });
+      return newContent;
+    });
+  }, []);
 
-  const removeTeacher = (courseIndex: number, teacherIndex: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].teachers.splice(teacherIndex, 1);
-    setEditedContent(newContent);
-  };
+  const removeTeacher = useCallback((courseIndex: number, teacherIndex: number) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].teachers.splice(teacherIndex, 1);
+      return newContent;
+    });
+  }, []);
 
-  const updateTeacher = (courseIndex: number, teacherIndex: number, field: keyof Teacher, value: string) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].teachers[teacherIndex][field] = value;
-    setEditedContent(newContent);
-  };
+  const updateTeacher = useCallback(
+    (courseIndex: number, teacherIndex: number, field: keyof Teacher, value: string) => {
+      setEditedContent((prev) => {
+        const newContent = structuredClone(prev);
+        newContent.courses[courseIndex].teachers[teacherIndex][field] = value;
+        return newContent;
+      });
+    },
+    []
+  );
 
   // 学生案例管理
-  const addStudentCase = (courseIndex: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].studentCases.push({ name: "", time: "", workImage: "" });
-    setEditedContent(newContent);
-  };
+  const addStudentCase = useCallback((courseIndex: number) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].studentCases.push({ name: "", time: "", workImage: "" });
+      return newContent;
+    });
+  }, []);
 
-  const removeStudentCase = (courseIndex: number, caseIndex: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].studentCases.splice(caseIndex, 1);
-    setEditedContent(newContent);
-  };
+  const removeStudentCase = useCallback((courseIndex: number, caseIndex: number) => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses[courseIndex].studentCases.splice(caseIndex, 1);
+      return newContent;
+    });
+  }, []);
 
-  const updateStudentCase = (courseIndex: number, caseIndex: number, field: keyof StudentCase, value: string) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses[courseIndex].studentCases[caseIndex][field] = value;
-    setEditedContent(newContent);
-  };
+  const updateStudentCase = useCallback(
+    (courseIndex: number, caseIndex: number, field: keyof StudentCase, value: string) => {
+      setEditedContent((prev) => {
+        const newContent = structuredClone(prev);
+        newContent.courses[courseIndex].studentCases[caseIndex][field] = value;
+        return newContent;
+      });
+    },
+    []
+  );
 
   // 添加新课程
-  const handleAddCourse = () => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses.push({
-      id: Date.now().toString(36),
-      title: "",
-      subtitle: "",
-      description: "",
-      features: [""],
-      image: "",
-      color: "from-blue-500 to-cyan-500",
-      teachers: [],
-      studentCases: [],
+  const handleAddCourse = useCallback(() => {
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        title: "",
+        subtitle: "",
+        description: "",
+        features: [""],
+        image: "",
+        color: "from-blue-500 to-cyan-500",
+        teachers: [],
+        studentCases: [],
+      });
+      return newContent;
     });
-    setEditedContent(newContent);
-  };
+  }, []);
 
   // 删除课程
-  const handleDeleteCourse = (index: number) => {
-    const newContent = structuredClone(editedContent);
-    newContent.courses.splice(index, 1);
-    setEditedContent(newContent);
-  };
+  const handleDeleteCourse = useCallback((index: number) => {
+    if (!confirm("确定要删除该课程吗？相关的教师和学生案例信息也将被删除。")) return;
+    setEditedContent((prev) => {
+      const newContent = structuredClone(prev);
+      newContent.courses.splice(index, 1);
+      return newContent;
+    });
+  }, []);
+
+  // 保存操作 - 使用 useFetcher 以 JSON 格式提交，支持大数据量
+  const handleSave = useCallback(() => {
+    // 客户端预验证
+    const validation = validateSiteContent(editedContent);
+    if (!validation.valid) {
+      setMessage({ type: "error", text: validation.errors.map((e) => e.message).join("；") });
+      return;
+    }
+    saveFetcher.submit(
+      { intent: "save", content: editedContent },
+      { method: "post", encType: "application/json" }
+    );
+  }, [editedContent, saveFetcher]);
+
+  // 重置操作
+  const handleReset = useCallback(() => {
+    if (!confirm("确定要恢复默认内容吗？所有修改将丢失且不可恢复！")) return;
+    resetFetcher.submit(
+      { intent: "reset" },
+      { method: "post", encType: "application/json" }
+    );
+  }, [resetFetcher]);
 
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">内容管理</h1>
         <div className="flex items-center gap-3">
-          <Form method="post">
-            <input type="hidden" name="intent" value="reset" />
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              恢复默认
-            </button>
-          </Form>
-          <Form method="post">
-            <input type="hidden" name="intent" value="save" />
-            <input type="hidden" name="content" value={JSON.stringify(editedContent)} />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? "保存中..." : "保存修改"}
-            </button>
-          </Form>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+          >
+            {resetFetcher.state === "submitting" ? "恢复中..." : "恢复默认"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {saveFetcher.state === "submitting" ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                保存中...
+              </span>
+            ) : (
+              "保存修改"
+            )}
+          </button>
         </div>
       </div>
 
+      {/* 消息提示 */}
       {message && (
-        <div className={`mb-4 px-4 py-3 rounded-lg text-sm ${actionData?.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
-          {message}
+        <div
+          className={`mb-4 px-4 py-3 rounded-lg text-sm flex items-center justify-between ${
+            message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {message.type === "success" ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <span>{message.text}</span>
+          </div>
+          <button onClick={() => setMessage(null)} className="text-current opacity-50 hover:opacity-100 transition-opacity">
+            ×
+          </button>
         </div>
       )}
 
@@ -218,10 +349,11 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === tab.key
-              ? "bg-white text-gray-900 shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
-              }`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === tab.key
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
           >
             {tab.label}
           </button>
@@ -289,6 +421,12 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                 + 添加课程
               </button>
             </div>
+            {editedContent.courses.length === 0 && (
+              <div className="text-center py-12 text-gray-400">
+                <span className="text-4xl block mb-3">📚</span>
+                <p>暂无课程，点击上方"添加课程"按钮创建</p>
+              </div>
+            )}
             {editedContent.courses.map((course, ci) => (
               <div key={course.id} className="border border-gray-200 rounded-xl p-6 space-y-6">
                 <div className="flex items-center justify-between">
