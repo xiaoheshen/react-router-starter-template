@@ -1,11 +1,12 @@
 import type { Route } from "./+types/about";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
+import { ImageViewer } from "../../components/ImageViewer";
 import { getContent } from "../../data/store";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "关于我们 - 艺术培训工作室" },
+    { title: "关于我们 - 海艺画社" },
     { name: "description", content: "了解我们的教学理念和师资团队" },
   ];
 }
@@ -40,7 +41,7 @@ export default function About({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center overflow-hidden">
               {about.image ? (
-                <img
+                <ImageViewer
                   src={about.image}
                   alt="关于我们"
                   className="w-full h-full object-cover"

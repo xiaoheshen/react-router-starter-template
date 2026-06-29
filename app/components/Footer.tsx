@@ -14,9 +14,9 @@ export function Footer({ slogan, copyright }: FooterProps) {
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">艺</span>
+                <span className="text-white font-bold text-sm">海</span>
               </div>
-              <span className="font-bold text-lg text-white">艺术培训</span>
+              <span className="font-bold text-lg text-white">海艺画社</span>
             </Link>
             {slogan && <p className="text-sm">{slogan}</p>}
           </div>
@@ -43,7 +43,7 @@ export function Footer({ slogan, copyright }: FooterProps) {
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
-          <p>{copyright || "© 2026 艺术培训工作室. All rights reserved."}</p>
+          <p>{copyright || "© 2026 海艺画社. All rights reserved."}</p>
         </div>
       </div>
     </footer>

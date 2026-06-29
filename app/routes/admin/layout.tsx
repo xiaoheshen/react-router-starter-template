@@ -57,11 +57,11 @@ export default function AdminLayout() {
         <div className="p-6 border-b border-gray-100">
           <a href="/" className="flex items-center gap-2" target="_blank" rel="noreferrer">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">艺</span>
+              <span className="text-white font-bold text-xs">海</span>
             </div>
             <div>
               <div className="font-bold text-sm text-gray-900">管理后台</div>
-              <div className="text-xs text-gray-400">艺术培训工作室</div>
+              <div className="text-xs text-gray-400">海艺画社</div>
             </div>
           </a>
         </div>

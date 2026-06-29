@@ -16,12 +16,14 @@ export function Hero({ title, subtitle, ctaText, backgroundImage, titleColor, su
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* 背景图或装饰 */}
       {backgroundImage ? (
-        <div
+        <BgImageViewer
+          src={backgroundImage}
+          alt="首页横幅"
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         >
           <div className="absolute inset-0 bg-black/40" />
-        </div>
+        </BgImageViewer>
       ) : (
         <>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50" />

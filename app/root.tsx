@@ -5,8 +5,10 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useNavigation,
 } from "react-router";
 import type { Route } from "./+types/root";
+import { useEffect, useState } from "react";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -22,6 +24,29 @@ export const links: Route.LinksFunction = () => [
 	},
 ];
 
+/**
+ * 导航加载进度条
+ * 在页面跳转时显示顶部加载动画，300ms 内完成视觉反馈
+ */
+function NavigationLoadingBar() {
+	const navigation = useNavigation();
+	const [visible, setVisible] = useState(false);
+
+	useEffect(() => {
+		if (navigation.state === "loading") {
+			// 仅在超过 50ms 的加载时显示进度条，避免闪烁
+			const timer = setTimeout(() => setVisible(true), 50);
+			return () => clearTimeout(timer);
+		} else {
+			setVisible(false);
+		}
+	}, [navigation.state]);
+
+	if (!visible) return null;
+
+	return <div className="navigation-loading-bar" />;
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="zh-CN">
@@ -29,6 +54,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<Meta />
+				{/* 预加载关键资源 */}
+				<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+				<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+				{/* 预取可能访问的下一页 */}
+				<link rel="prefetch" href="/courses" as="document" />
+				<link rel="prefetch" href="/about" as="document" />
+				<link rel="prefetch" href="/contact" as="document" />
 				<Links />
 			</head>
 			<body>
@@ -41,7 +73,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<>
+			<NavigationLoadingBar />
+			<Outlet />
+		</>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

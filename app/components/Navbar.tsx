@@ -19,9 +19,9 @@ export function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">艺</span>
+              <span className="text-white font-bold text-sm">海</span>
             </div>
-            <span className="font-bold text-lg text-gray-900">艺术培训</span>
+            <span className="font-bold text-lg text-gray-900">海艺画社</span>
           </Link>
 
           {/* Desktop Nav */}

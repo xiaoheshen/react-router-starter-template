@@ -3,7 +3,7 @@ import { Form, useNavigation } from "react-router";
 import { verifyAdmin } from "../../data/store";
 
 export function meta({ }: Route.MetaArgs) {
-  return [{ title: "管理员登录 - 艺术培训工作室" }];
+  return [{ title: "管理员登录 - 海艺画社" }];
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -50,7 +50,7 @@ export default function Login({ actionData }: Route.ComponentProps) {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <div className="text-center mb-8">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-lg">艺</span>
+              <span className="text-white font-bold text-lg">海</span>
             </div>
             <h1 className="text-xl font-bold text-gray-900">管理后台</h1>
             <p className="text-sm text-gray-500 mt-1">请输入管理员密码</p>

@@ -4,6 +4,7 @@ import type { SiteContent, Teacher, StudentCase } from "../../data/content";
 import { useState, useEffect, useCallback } from "react";
 import { useFetcher } from "react-router";
 import { ImageUploader } from "../../components/ImageUploader";
+import { ImageViewer } from "../../components/ImageViewer";
 import { validateSiteContent } from "../../data/validation";
 
 export function meta({ }: Route.MetaArgs) {
@@ -546,14 +547,14 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                           placeholder={`特色 ${fi + 1}`}
                         />
                         {course.features.length > 1 && (
-                          <button
+                      <button
                             type="button"
                             onClick={() => removeCourseFeature(ci, fi)}
-                            className="text-red-400 hover:text-red-600 text-sm"
-                         >
-                           删除
-                        </button>
-                        )}
+                      className="text-red-400 hover:text-red-600 text-sm"
+                 >
+                 删除
+                </button>
+                )}
                       </div>
                     ))}
                   </div>
@@ -570,7 +571,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                         type="button"
                         onClick={() => addTeacher(ci)}
                         className="text-xs text-blue-600 hover:text-blue-700"
-                      >
+                  >
                         + 添加教师
                       </button>
                     )}
@@ -609,13 +610,13 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                       </div>
                       <ImageUploader
                         label="教师照片"
-                        value={teacher.image}
+                         value={teacher.image}
                         onChange={(base64) => updateTeacher(ci, ti, "image", base64)}
-                      />
+                  />
                     </div>
                   ))}
-                  {course.teachers.length === 0 && (
-                    <p className="text-sm text-gray-400">暂无教师信息，点击上方按钮添加</p>
+              {course.teachers.length === 0 && (
+                <p className="text-sm text-gray-400">暂无教师信息，点击上方按钮添加</p>
                   )}
                 </div>
 
@@ -702,24 +703,23 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none"
               />
             </div>
-            <ImageUploader
-              label="关于我们配图"
-              value={editedContent.about.image}
-              onChange={(base64) => updateField("about.image", base64)}
+          < ImageUploader
+label = "关于我们配图"
+value = { editedContent.about.image }
+onChange = {(base64) => updateField("about.image", base64)}
             />
-            {editedContent.about.image && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">图片预览</label>
-                <img
-                  src={editedContent.about.image}
-                  alt="关于我们配图预览"
-                  className="w-full max-w-md aspect-square object-cover rounded-lg border border-gray-200"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
-            )}
+{
+  editedContent.about.image && (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">图片预览</label>
+      <ImageViewer
+        src={editedContent.about.image}
+        alt="关于我们配图预览"
+        className="w-full max-w-md aspect-square object-cover rounded-lg border border-gray-200"
+      />
+    </div>
+  )
+}
           </div>
         )}
 
@@ -755,13 +755,10 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
               {editedContent.contact.mapImage && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">地图预览</label>
-                  <img
+                  <ImageViewer
                     src={editedContent.contact.mapImage}
                     alt="地图预览"
                     className="w-full max-w-md aspect-[4/3] object-contain rounded-lg border border-gray-200"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
                   />
                 </div>
               )}

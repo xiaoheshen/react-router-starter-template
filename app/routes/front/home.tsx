@@ -4,11 +4,12 @@ import { Footer } from "../../components/Footer";
 import { Hero } from "../../components/Hero";
 import { CourseCard } from "../../components/CourseCard";
 import { getContent } from "../../data/store";
+import { ImageViewer } from "../../components/ImageViewer";
 import { Link } from "react-router";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "艺术培训工作室 - 发现孩子的艺术天赋" },
+    { title: "海艺画社 - 发现孩子的艺术天赋" },
     { name: "description", content: "专注初中小学美术、吉他兴趣、趣味书法、舞蹈培训" },
   ];
 }
@@ -97,7 +98,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             </div>
             <div className="relative">
               {about.image ? (
-                <img
+                <ImageViewer
                   src={about.image}
                   alt="关于我们"
                   className="aspect-[4/3] object-cover rounded-2xl w-full"

@@ -2,11 +2,12 @@ import type { Route } from "./+types/courses";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { getContent } from "../../data/store";
+import { BgImageViewer } from "../../components/ImageViewer";
 import { Link } from "react-router";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "课程介绍 - 艺术培训工作室" },
+    { title: "课程介绍 - 海艺画社" },
     { name: "description", content: "初中小学美术、吉他兴趣、趣味书法、舞蹈培训课程详情" },
   ];
 }
@@ -73,7 +74,9 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
                 </div>
                 <div className={i % 2 === 1 ? "lg:col-start-1" : ""}>
                   {course.image ? (
-                    <div
+                    <BgImageViewer
+                      src={course.image}
+                      alt={course.title}
                       className="aspect-square rounded-2xl bg-cover bg-center"
                       style={{ backgroundImage: `url(${course.image})` }}
                     />
@@ -99,7 +102,9 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
                     {course.teachers.map((teacher, ti) => (
                       <div key={ti} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
                         {teacher.image ? (
-                          <div
+                          <BgImageViewer
+                            src={teacher.image}
+                            alt={teacher.name}
                             className="h-48 bg-cover bg-center"
                             style={{ backgroundImage: `url(${teacher.image})` }}
                           />
@@ -128,7 +133,9 @@ export default function Courses({ loaderData }: Route.ComponentProps) {
                     {course.studentCases.map((sc, si) => (
                       <div key={si} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
                         {sc.workImage ? (
-                          <div
+                          <BgImageViewer
+                            src={sc.workImage}
+                            alt={sc.name}
                             className="h-48 bg-cover bg-center"
                             style={{ backgroundImage: `url(${sc.workImage})` }}
                           />

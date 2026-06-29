@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import type { Course } from "../data/content";
+import { BgImageViewer } from "./ImageViewer";
 
 interface CourseCardProps {
   course: Course;
@@ -15,7 +16,12 @@ export function CourseCard({ course, index }: CourseCardProps) {
     >
       {/* 顶部色块或图片 */}
       {course.image ? (
-        <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />
+        <BgImageViewer
+          src={course.image}
+          alt={course.title}
+          className="h-40 bg-cover bg-center"
+          style={{ backgroundImage: `url(${course.image})` }}
+        />
       ) : (
         <div className={`h-2 bg-gradient-to-r ${course.color}`} />
       )}

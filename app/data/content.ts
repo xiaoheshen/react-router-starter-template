@@ -209,6 +209,6 @@ export const defaultContent: SiteContent = {
   },
   footer: {
     slogan: "让每个孩子都能绽放光彩",
-    copyright: "© 2026 艺术培训工作室. All rights reserved.",
+    copyright: "© 2026 海艺画社. All rights reserved.",
   },
 };

@@ -3,11 +3,12 @@ import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { getContent, addInquiry } from "../../data/store";
 import { Form, redirect, useNavigation } from "react-router";
+import { ImageViewer } from "../../components/ImageViewer";
 import { validateInquiry } from "../../data/validation";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "联系我们 - 艺术培训工作室" },
+    { title: "联系我们 - 海艺画社" },
     { name: "description", content: "预约免费试听课，联系我们了解更多" },
   ];
 }
@@ -164,7 +165,7 @@ export default function Contact({ loaderData }: Route.ComponentProps) {
 
               {/* 地图占位 */}
               {contact.mapImage ? (
-                <img
+                <ImageViewer
                   src={contact.mapImage}
                   alt="地图"
                   className="aspect-[4/3] object-cover rounded-2xl w-full"
