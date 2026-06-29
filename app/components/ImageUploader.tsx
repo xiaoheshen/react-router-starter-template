@@ -1,4 +1,4 @@
-// 增强版图片上传组件
+﻿// 增强版图片上传组件
 // 支持图片选择、客户端预览、格式/大小验证、智能压缩、上传进度显示
 // 图片自动压缩后存储为 base64 data URL，确保不超过 D1 数据库的 1MB 存储限制
 
@@ -21,7 +21,7 @@ const DIMENSION_LEVELS = [
   { w: 1200, h: 1200 },
   { w: 900, h: 900 },
   { w: 600, h: 600 },
- ;
+];
 
 export interface CompressResult {
   dataUrl: string;
