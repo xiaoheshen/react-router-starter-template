@@ -3,15 +3,12 @@
 // 图片自动压缩后存储为 base64 data URL，确保不超过 D1 数据库的 1MB 存储限制
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { validateImageFile, MAX_IMAGE_SIZE_MB, MAX_COMPRESSED_BASE64_SIZE, ALLOWED_IMAGE_EXTENSIONS } from "../data/validation";
+import { validateImageFile, MAX_COMPRESSED_BASE64_SIZE, ALLOWED_IMAGE_EXTENSIONS } from "../data/validation";
 
 // ==================== 压缩配置常量 ====================
 
 /** D1 数据库单行存储限制约 1MB，base64 编码会使数据膨胀约 1.33 倍，因此设置安全阈值 */
 const MAX_BASE64_LENGTH = MAX_COMPRESSED_BASE64_SIZE; // 从 validation 共用常量
-
-/** 小型文件阈值：小于此值直接读取不压缩 */
-const SMALL_FILE_THRESHOLD = 50 * 1024; // 50KB
 
 /** 压缩质量梯度（从高到低依次尝试） */
 const QUALITY_LEVELS = [0.8, 0.6, 0.4, 0.25];
@@ -249,20 +246,9 @@ export function ImageUploader({
             if (fileRef.current) fileRef.current.value = "";
             return;
           }
-        } else if (file.size <= SMALL_FILE_THRESHOLD) {
-          // 小文件直接读取，但也检查 base64 大小
-          dataUrl = await readFileAsDataURL(file);
-          setUploadProgress("");
-
-          // 小文件也可能超限（如高压缩比的 JPEG 可能 base64 很大）
-          if (dataUrl.length > MAX_BASE64_LENGTH) {
-            setUploadProgress("小文件超限，正在压缩...");
-            compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
-            dataUrl = compressResult.dataUrl;
-          }
         } else {
-          // 智能压缩到目标大小
-          setUploadProgress("正在智能压缩...");
+                所有图片自动压缩到 D1 存储上限
+          setUploadProgress("正在自动压缩...");
           compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
           dataUrl = compressResult.dataUrl;
         }
@@ -295,17 +281,15 @@ export function ImageUploader({
           ? compressResult.binarySize
           : estimateBinarySize(dataUrl);
 
-        if (originalSize > SMALL_FILE_THRESHOLD || compressResult) {
+        if (compressResult) {
           const ratio = ((1 - compressedBinarySize / originalSize) * 100).toFixed(0);
-          const dims = compressResult
-            ? `${compressResult.width}×${compressResult.height}`
-            : "原始尺寸";
+          const dims = `${compressResult.width}×${compressResult.height}`;
 
           setCompressInfo({
             originalSize,
             compressedSize: compressedBinarySize,
             dimensions: dims,
-            quality: compressResult ? compressResult.quality : 1,
+            quality: compressResult.quality,
           });
 
           setUploadProgress(
@@ -387,7 +371,7 @@ export function ImageUploader({
         </button>
 
         <span className="text-xs text-gray-400">
-          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，最大 {MAX_IMAGE_SIZE_MB}MB{noCompress ? "" : "，自动压缩"}
+          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，不限大小{noCompress ? "" : "，自动压缩"}
         </span>
       </div>
 

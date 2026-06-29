@@ -6,7 +6,6 @@
 import type { Route } from "./+types/upload";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB 原始文件上传限制
 const MAX_BASE64_SIZE = 900 * 1024; // 900KB base64 字符串，确保不超过 D1 1MB 限制
 
 export async function action({ request }: Route.ActionArgs) {
@@ -41,14 +40,6 @@ export async function action({ request }: Route.ActionArgs) {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return Response.json(
         { error: `不支持的图片格式，仅支持 JPG、PNG、GIF、WebP` },
-        { status: 400 }
-      );
-    }
-
-    // 验证文件大小
-    if (file.size > MAX_FILE_SIZE) {
-      return Response.json(
-        { error: `图片大小不能超过 5MB，当前文件大小 ${(file.size / 1024 / 1024).toFixed(1)}MB` },
         { status: 400 }
       );
     }
