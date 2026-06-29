@@ -80,7 +80,7 @@ export function validate(...checks: (ValidationError | null)[]): ValidationResul
 
 export function validateSiteContent(content: SiteContent): ValidationResult {
   const errors: ValidationError[] = [];
-  
+
   // Hero 验证
   const heroErr = required(content.hero.title, "首页标题");
   if (heroErr) errors.push(heroErr);
@@ -88,7 +88,7 @@ export function validateSiteContent(content: SiteContent): ValidationResult {
   if (heroSubErr) errors.push(heroSubErr);
   const ctaErr = required(content.hero.ctaText, "按钮文字");
   if (ctaErr) errors.push(ctaErr);
-  
+
   // 课程验证
   if (content.courses.length === 0) {
     errors.push({ field: "courses", message: "至少需要添加一个课程" });
@@ -113,17 +113,17 @@ export function validateSiteContent(content: SiteContent): ValidationResult {
       }
     });
   });
-  
+
   // About 验证
   const aboutTitleErr = required(content.about.title, "关于我们标题");
   if (aboutTitleErr) errors.push(aboutTitleErr);
   const aboutDescErr = required(content.about.description, "关于我们描述");
   if (aboutDescErr) errors.push(aboutDescErr);
-  
+
   // Contact 验证
   const phoneErr = required(content.contact.phone, "联系电话");
   if (phoneErr) errors.push(phoneErr);
-  
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -137,31 +137,31 @@ export function validateInquiry(data: {
   message?: string;
 }): ValidationResult {
   const errors: ValidationError[] = [];
-  
+
   const nameErr = required(data.name, "姓名");
   if (nameErr) errors.push(nameErr);
   else {
     const nameLenErr = maxLength(data.name, 50, "姓名");
     if (nameLenErr) errors.push(nameLenErr);
   }
-  
+
   const phoneErr = required(data.phone, "电话");
   if (phoneErr) errors.push(phoneErr);
   else {
     const phoneFmtErr = phone(data.phone);
     if (phoneFmtErr) errors.push(phoneFmtErr);
   }
-  
+
   if (data.email) {
     const emailErr = email(data.email);
     if (emailErr) errors.push(emailErr);
   }
-  
+
   if (data.message) {
     const msgLenErr = maxLength(data.message, 500, "留言");
     if (msgLenErr) errors.push(msgLenErr);
   }
-  
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -169,30 +169,32 @@ export function validateInquiry(data: {
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 export const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB 原始文件上传限制
 export const MAX_IMAGE_SIZE_MB = 5;
+/** D1 数据库单行存储限制约 1MB，base64 编码后数据膨胀约 1.33 倍，安全阈值设为 800KB */
+export const MAX_COMPRESSED_BASE64_SIZE = 800 * 1024; // 800KB base64 ≈ 600KB 原始二进制
 
 export function validateImageFile(file: File): ValidationResult {
   const errors: ValidationError[] = [];
-  
+
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    errors.push({ 
-      field: "image", 
-      message: `不支持的图片格式，仅支持 ${ALLOWED_IMAGE_EXTENSIONS.join(", ")}` 
+    errors.push({
+      field: "image",
+      message: `不支持的图片格式，仅支持 ${ALLOWED_IMAGE_EXTENSIONS.join(", ")}`
     });
   }
-  
+
   if (file.size > MAX_IMAGE_SIZE) {
-    errors.push({ 
-      field: "image", 
-      message: `图片大小不能超过 ${MAX_IMAGE_SIZE_MB}MB` 
+    errors.push({
+      field: "image",
+      message: `图片大小不能超过 ${MAX_IMAGE_SIZE_MB}MB`
     });
   }
-  
+
   if (file.size === 0) {
     errors.push({ field: "image", message: "图片文件为空" });
   }
-  
+
   return { valid: errors.length === 0, errors };
 }
 
