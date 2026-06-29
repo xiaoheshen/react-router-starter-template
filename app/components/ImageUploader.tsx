@@ -157,7 +157,7 @@ async function compressImageToTarget(
   // 如果兜底方案仍然超过限制，抛出明确的错误
   if (finalResult.dataUrl.length > MAX_BASE64_LENGTH) {
     throw new Error(
-      `图片压缩后仍过大（${(finalResult.binarySize / 1024).toFixed(0)}KB），请使用更小的图片`
+      `图片压缩后仍过大（${(finalResult.binarySize / 1024).toFixed(0)}KB），请尝试更换图片`
     );
   }
 
@@ -233,44 +233,44 @@ export function ImageUploader({
         let compressResult: CompressResult | null = null;
 
         if (noCompress) {
-          // 不压缩模式：直接读取原始文件
+          // 不压缩模式：先尝试直接读取原始文件
           dataUrl = await readFileAsDataURL(file);
-          setUploadProgress("已读取原始文件");
-
-          // 检查不压缩的文件是否超过 D1 限制
+          
+                  // 如果原始文件超过 D1 限制，自动降级为压缩模式
           if (dataUrl.length > MAX_BASE64_LENGTH) {
-            setError(
-              `图片过大（${(estimateBinarySize(dataUrl) / 1024).toFixed(0)}KB），请启用压缩或使用更小的图片`
-            );
-            setUploading(false);
-            if (fileRef.current) fileRef.current.value = "";
-            return;
+            setUploadProgress("图片较大，正在自动压缩...");
+            compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
+            dataUrl = compressResult.dataUrl;
+          } else {
+            setUploadProgress("已读取原始文件");
           }
         } else {
           // 所有图片自动压缩到 D1 存储上限
           setUploadProgress("正在自动压缩...");
-              compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
-              dataUrl = compressResult.dataUrl;
-        }
+          compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
+          dataUrl = compressResult.dataUrl;
+	        }
 
-            setPreview(dataUrl);
-          
+        setPreview(dataUrl);
+
         // 生成缩略图（如果需要）
-          if (generateThumbnail) {
+        if (generateThumbnail) {
           try {
-            const { img } = await loadImage(file);
-          const thumbResult = compressWithCanvas(
-         img,
-        thumbnailWidth,
-          thumbnailHeight,
-              0.7,
-        "image/jpeg"
-            );
-        setThumbnail(thumbResult.dataUrl);
-          } catch {
-          console.warn("缩略图生成失败");
-          }
-        }
+          const { img } = await loadImage(file);
+	            const thumbResult = compressWithCanvas(
+        img,
+	              thumbnailWidth,
+               thumbnailHeight,
+	              0.7,
+              "image/jpeg"
+	            );
+	            setThumbnail(thumbResult.dataUrl);
+	    
+        } catch {
+	       
+     console.warn("缩略图生成失败");
+  }
+	        }
 
         // 将压缩后的 base64 传递给父组件
         onChange(dataUrl);
@@ -371,7 +371,7 @@ export function ImageUploader({
         </button>
 
         <span className="text-xs text-gray-400">
-          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，不限大小{noCompress ? "" : "，自动压缩"}
+          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，上传自动压缩
         </span>
       </div>
 
@@ -401,9 +401,6 @@ export function ImageUploader({
           </svg>
           <div>
             <p className="text-sm text-red-600">{error}</p>
-            <p className="text-xs text-red-400 mt-1">
-              建议：使用更小的图片，或确保图片宽度不超过 1200px
-            </p>
           </div>
         </div>
       )}

@@ -169,8 +169,8 @@ export function validateInquiry(data: {
 
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 export const ALLOWED_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-/** D1 数据库单行存储限制约 1MB，base64 编码后数据膨胀约 1.33 倍，安全阈值设为 800KB */
-export const MAX_COMPRESSED_BASE64_SIZE = 800 * 1024; // 800KB base64 ≈ 600KB 原始二进制
+/** D1 数据库单行存储限制约 1MB，base64 编码后数据膨胀约 1.33 倍，安全阈值设为 900KB */
+export const MAX_COMPRESSED_BASE64_SIZE = 900 * 1024; // 900KB base64 ≈ 675KB 原始二进制
 
 /**
  * 验证图片文件

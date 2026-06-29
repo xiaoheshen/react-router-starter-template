@@ -396,7 +396,6 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
               label="首页横幅背景图片"
               value={editedContent.hero.backgroundImage}
               onChange={(base64) => updateField("hero.backgroundImage", base64)}
-              noCompress={true}
               previewFit="contain"
             />
             {editedContent.hero.backgroundImage && (
