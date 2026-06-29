@@ -1,10 +1,12 @@
 import type { Route } from "./+types/contact";
+import { useState, useCallback } from "react";
 import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { getContent, addInquiry } from "../../data/store";
-import { Form, redirect, useNavigation } from "react-router";
+import { Form, useNavigation, useActionData, useSubmit } from "react-router";
 import { ImageViewer } from "../../components/ImageViewer";
 import { validateInquiry } from "../../data/validation";
+import Toast from "../../components/Toast";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -25,23 +27,72 @@ export async function action({ request, context }: Route.ActionArgs) {
   const message = formData.get("message") as string;
 
   if (!name || !phone) {
-    return { error: "请填写姓名和电话" };
+    return { success: false, error: "请填写姓名和电话" };
   }
 
   // 数据验证
   const validation = validateInquiry({ name, phone, course, message });
   if (!validation.valid) {
-    return { error: validation.errors.map((e) => e.message).join("；") };
+    return { success: false, error: validation.errors.map((e) => e.message).join("；") };
   }
 
-  await addInquiry(context.cloudflare.env.DB, { name, phone, course, message });
-  return redirect("/contact?success=1");
+  try {
+    await addInquiry(context.cloudflare.env.DB, { name, phone, course, message });
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "提交失败，请稍后重试" };
+  }
 }
 
 export default function Contact({ loaderData }: Route.ComponentProps) {
   const { contact, footer } = loaderData;
   const navigation = useNavigation();
+  const actionData = useActionData<{ success?: boolean; error?: string }>();
+  const submit = useSubmit();
   const isSubmitting = navigation.state === "submitting";
+
+  // Toast 状态管理
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    title: string;
+    message?: string;
+    visible: boolean;
+  }>({ type: "success", title: "", visible: false });
+
+  // 监听 actionData 变化，触发 Toast
+  const [lastActionData, setLastActionData] = useState<{ success?: boolean; error?: string } | null>(null);
+  if (actionData && actionData !== lastActionData) {
+    setLastActionData(actionData);
+    if (actionData.success) {
+      setToast({
+        type: "success",
+        title: "提交成功",
+        message: "感谢您的预约，我们会尽快与您联系！",
+        visible: true,
+      });
+    } else {
+      setToast({
+        type: "error",
+        title: "提交失败",
+        message: actionData.error || "提交失败，请稍后重试",
+        visible: true,
+      });
+    }
+  }
+
+  const handleCloseToast = useCallback(() => {
+    setToast((prev) => ({ ...prev, visible: false }));
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    // 关闭错误提示，让用户重新提交
+    setToast((prev) => ({ ...prev, visible: false }));
+    // 通过重新提交表单来重试
+    const form = document.getElementById("inquiry-form") as HTMLFormElement;
+    if (form) {
+      submit(form);
+    }
+  }, [submit]);
 
   return (
     <div className="min-h-screen">
@@ -62,7 +113,7 @@ export default function Contact({ loaderData }: Route.ComponentProps) {
             {/* 表单 */}
             <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">预约试听课</h2>
-              <Form method="post" className="space-y-5">
+              <Form id="inquiry-form" method="post" className="space-y-5">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                     家长姓名 <span className="text-red-500">*</span>
@@ -120,9 +171,19 @@ export default function Contact({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50"
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "提交中..." : "提交预约"}
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      提交中...
+                    </span>
+                  ) : (
+                    "提交预约"
+                  )}
                 </button>
               </Form>
             </div>
@@ -184,6 +245,16 @@ export default function Contact({ loaderData }: Route.ComponentProps) {
       </section>
 
       <Footer slogan={footer.slogan} copyright={footer.copyright} />
+
+      {/* Toast 反馈提示框 */}
+      <Toast
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        visible={toast.visible}
+        onClose={handleCloseToast}
+        onRetry={toast.type === "error" ? handleRetry : undefined}
+      />
     </div>
   );
 }
