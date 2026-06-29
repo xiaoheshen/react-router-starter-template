@@ -247,28 +247,28 @@ export function ImageUploader({
             return;
           }
         } else {
-                所有图片自动压缩到 D1 存储上限
+          // 所有图片自动压缩到 D1 存储上限
           setUploadProgress("正在自动压缩...");
-          compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
-          dataUrl = compressResult.dataUrl;
+              compressResult = await compressImageToTarget(file, maxWidth, maxHeight);
+              dataUrl = compressResult.dataUrl;
         }
 
-        setPreview(dataUrl);
-
+            setPreview(dataUrl);
+          
         // 生成缩略图（如果需要）
-        if (generateThumbnail) {
+          if (generateThumbnail) {
           try {
             const { img } = await loadImage(file);
-            const thumbResult = compressWithCanvas(
-              img,
-              thumbnailWidth,
-              thumbnailHeight,
+          const thumbResult = compressWithCanvas(
+         img,
+        thumbnailWidth,
+          thumbnailHeight,
               0.7,
-              "image/jpeg"
+        "image/jpeg"
             );
-            setThumbnail(thumbResult.dataUrl);
+        setThumbnail(thumbResult.dataUrl);
           } catch {
-            console.warn("缩略图生成失败");
+          console.warn("缩略图生成失败");
           }
         }
 
