@@ -31,6 +31,10 @@ export interface SiteContent {
     subtitle: string;
     ctaText: string;
     backgroundImage: string;
+    titleColor: string;
+    subtitleColor: string;
+    ctaBgColor: string;
+    ctaTextColor: string;
   };
   courses: Course[];
   about: {
@@ -46,6 +50,7 @@ export interface SiteContent {
     email: string;
     address: string;
     wechat: string;
+    mapImage: string;
   };
   footer: {
     slogan: string;
@@ -126,6 +131,10 @@ export const defaultContent: SiteContent = {
     subtitle: "专注初中小学美术 · 吉他兴趣 · 趣味书法 · 舞蹈培训，让每个孩子都能绽放光彩",
     ctaText: "立即预约试听课",
     backgroundImage: "",
+    titleColor: "#111827",
+    subtitleColor: "#6B7280",
+    ctaBgColor: "#2563EB",
+    ctaTextColor: "#FFFFFF",
   },
   courses: [
     {
@@ -196,6 +205,7 @@ export const defaultContent: SiteContent = {
     email: "hello@example.com",
     address: "XX市XX区XX路XX号",
     wechat: "artstudio666",
+    mapImage: "",
   },
   footer: {
     slogan: "让每个孩子都能绽放光彩",

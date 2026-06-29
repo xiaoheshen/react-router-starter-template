@@ -111,6 +111,10 @@ export async function getContent(db: D1Database): Promise<SiteContent> {
       subtitle: heroSection?.subtitle || defaultContent.hero.subtitle,
       ctaText: heroSection?.description || defaultContent.hero.ctaText,
       backgroundImage: heroData.backgroundImage || "",
+      titleColor: heroData.titleColor || defaultContent.hero.titleColor,
+      subtitleColor: heroData.subtitleColor || defaultContent.hero.subtitleColor,
+      ctaBgColor: heroData.ctaBgColor || defaultContent.hero.ctaBgColor,
+      ctaTextColor: heroData.ctaTextColor || defaultContent.hero.ctaTextColor,
     },
     courses: courses.length > 0 ? courses : defaultContent.courses,
     about: {
@@ -126,6 +130,7 @@ export async function getContent(db: D1Database): Promise<SiteContent> {
       email: contactData.email || defaultContent.contact.email,
       address: contactData.address || defaultContent.contact.address,
       wechat: contactData.wechat || defaultContent.contact.wechat,
+      mapImage: contactData.mapImage || "",
     },
     footer: {
       slogan: footerSection?.title || defaultContent.footer.slogan,
@@ -203,7 +208,13 @@ async function seedDefaultContent(db: D1Database): Promise<void> {
       title: defaultContent.hero.title,
       subtitle: defaultContent.hero.subtitle,
       description: defaultContent.hero.ctaText,
-      data: JSON.stringify({ backgroundImage: defaultContent.hero.backgroundImage }),
+      data: JSON.stringify({
+        backgroundImage: defaultContent.hero.backgroundImage,
+        titleColor: defaultContent.hero.titleColor,
+        subtitleColor: defaultContent.hero.subtitleColor,
+        ctaBgColor: defaultContent.hero.ctaBgColor,
+        ctaTextColor: defaultContent.hero.ctaTextColor,
+      }),
     },
     {
       section: "about",
@@ -222,6 +233,7 @@ async function seedDefaultContent(db: D1Database): Promise<void> {
         email: defaultContent.contact.email,
         address: defaultContent.contact.address,
         wechat: defaultContent.contact.wechat,
+        mapImage: defaultContent.contact.mapImage,
       }),
     },
     {
@@ -265,7 +277,13 @@ export async function updateContent(db: D1Database, content: SiteContent): Promi
       title: content.hero.title,
       subtitle: content.hero.subtitle,
       description: content.hero.ctaText,
-      data: JSON.stringify({ backgroundImage: content.hero.backgroundImage }),
+      data: JSON.stringify({
+        backgroundImage: content.hero.backgroundImage,
+        titleColor: content.hero.titleColor,
+        subtitleColor: content.hero.subtitleColor,
+        ctaBgColor: content.hero.ctaBgColor,
+        ctaTextColor: content.hero.ctaTextColor,
+      }),
     },
     {
       section: "about",
@@ -284,6 +302,7 @@ export async function updateContent(db: D1Database, content: SiteContent): Promi
         email: content.contact.email,
         address: content.contact.address,
         wechat: content.contact.wechat,
+        mapImage: content.contact.mapImage,
       }),
     },
     {

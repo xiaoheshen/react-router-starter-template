@@ -25,7 +25,16 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <Navbar />
 
       {/* Hero Section */}
-      <Hero title={hero.title} subtitle={hero.subtitle} ctaText={hero.ctaText} backgroundImage={hero.backgroundImage} />
+      <Hero
+        title={hero.title}
+        subtitle={hero.subtitle}
+        ctaText={hero.ctaText}
+        backgroundImage={hero.backgroundImage}
+        titleColor={hero.titleColor}
+        subtitleColor={hero.subtitleColor}
+        ctaBgColor={hero.ctaBgColor}
+        ctaTextColor={hero.ctaTextColor}
+      />
 
       {/* 课程概览 */}
       <section className="py-20 bg-white">
@@ -87,9 +96,17 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               </Link>
             </div>
             <div className="relative">
-              <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <span className="text-6xl">🎓</span>
-              </div>
+              {about.image ? (
+                <img
+                  src={about.image}
+                  alt="关于我们"
+                  className="aspect-[4/3] object-cover rounded-2xl w-full"
+                />
+              ) : (
+                <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                  <span className="text-6xl">🎓</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

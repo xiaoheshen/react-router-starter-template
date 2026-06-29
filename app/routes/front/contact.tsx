@@ -163,12 +163,20 @@ export default function Contact({ loaderData }: Route.ComponentProps) {
               </div>
 
               {/* 地图占位 */}
-              <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
-                <div className="text-center">
-                  <span className="text-4xl block mb-2">🗺️</span>
-                  <span className="text-gray-400 text-sm">地图区域</span>
+              {contact.mapImage ? (
+                <img
+                  src={contact.mapImage}
+                  alt="地图"
+                  className="aspect-[4/3] object-cover rounded-2xl w-full"
+                />
+              ) : (
+                <div className="aspect-[4/3] bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
+                  <div className="text-center">
+                    <span className="text-4xl block mb-2">🗺️</span>
+                    <span className="text-gray-400 text-sm">地图区域</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -38,8 +38,16 @@ export default function About({ loaderData }: Route.ComponentProps) {
                 {about.description}
               </p>
             </div>
-            <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center">
-              <span className="text-8xl">🏫</span>
+            <div className="aspect-square bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center overflow-hidden">
+              {about.image ? (
+                <img
+                  src={about.image}
+                  alt="关于我们"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-8xl">🏫</span>
+              )}
             </div>
           </div>
         </div>

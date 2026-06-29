@@ -5,9 +5,13 @@ interface HeroProps {
   subtitle: string;
   ctaText: string;
   backgroundImage?: string;
+  titleColor?: string;
+  subtitleColor?: string;
+  ctaBgColor?: string;
+  ctaTextColor?: string;
 }
 
-export function Hero({ title, subtitle, ctaText, backgroundImage }: HeroProps) {
+export function Hero({ title, subtitle, ctaText, backgroundImage, titleColor, subtitleColor, ctaBgColor, ctaTextColor }: HeroProps) {
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* 背景图或装饰 */}
@@ -29,16 +33,17 @@ export function Hero({ title, subtitle, ctaText, backgroundImage }: HeroProps) {
 
       {/* 内容 */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center pt-16">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 leading-tight mb-6 animate-fade-in-up">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight mb-6 animate-fade-in-up" style={{ color: titleColor || "#111827" }}>
           {title}
         </h1>
-        <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto mb-10 animate-fade-in-up-delay-1">
+        <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-10 animate-fade-in-up-delay-1" style={{ color: subtitleColor || "#6B7280" }}>
           {subtitle}
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up-delay-2">
           <Link
             to="/contact"
-            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5"
+            className="px-8 py-4 font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5"
+            style={{ backgroundColor: ctaBgColor || "#2563EB", color: ctaTextColor || "#FFFFFF" }}
           >
             {ctaText}
           </Link>

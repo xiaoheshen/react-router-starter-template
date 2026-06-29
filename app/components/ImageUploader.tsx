@@ -14,6 +14,8 @@ interface ImageUploaderProps {
   generateThumbnail?: boolean;
   thumbnailWidth?: number;
   thumbnailHeight?: number;
+  noCompress?: boolean;
+  previewFit?: "cover" | "contain";
 }
 
 /**
@@ -83,6 +85,8 @@ export function ImageUploader({
   generateThumbnail = false,
   thumbnailWidth = 200,
   thumbnailHeight = 200,
+  noCompress = false,
+  previewFit = "cover",
 }: ImageUploaderProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +124,9 @@ export function ImageUploader({
         const isSmallFile = file.size < 100 * 1024;
 
         let dataUrl: string;
-        if (isSmallFile) {
+        if (noCompress) {
+          dataUrl = await readFileAsDataURL(file);
+        } else if (isSmallFile) {
           dataUrl = await readFileAsDataURL(file);
         } else {
           // 压缩图片到合理尺寸
@@ -219,7 +225,7 @@ export function ImageUploader({
         </button>
 
         <span className="text-xs text-gray-400">
-          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，最大 {MAX_IMAGE_SIZE_MB}MB，自动压缩
+          支持 {ALLOWED_IMAGE_EXTENSIONS.join(", ")}，最大 {MAX_IMAGE_SIZE_MB}MB{noCompress ? "" : "，自动压缩"}
         </span>
       </div>
 
@@ -244,7 +250,7 @@ export function ImageUploader({
             <img
               src={preview || value}
               alt="预览"
-              className="h-24 w-24 object-cover rounded-lg border border-gray-200"
+              className={`h-24 w-24 rounded-lg border border-gray-200 ${previewFit === "contain" ? "object-contain" : "object-cover"}`}
               onError={(e) => {
                 // 图片加载失败时显示占位符
                 (e.target as HTMLImageElement).style.display = "none";

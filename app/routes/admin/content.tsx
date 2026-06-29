@@ -395,16 +395,51 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
               label="首页横幅背景图片"
               value={editedContent.hero.backgroundImage}
               onChange={(base64) => updateField("hero.backgroundImage", base64)}
+              noCompress={true}
+              previewFit="contain"
             />
             {editedContent.hero.backgroundImage && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">背景预览</label>
                 <div
-                  className="w-full h-40 rounded-lg bg-cover bg-center border border-gray-200"
-                  style={{ backgroundImage: `url(${editedContent.hero.backgroundImage})` }}
+                  className="w-full h-48 rounded-lg border border-gray-200"
+                  style={{ backgroundImage: `url(${editedContent.hero.backgroundImage})`, backgroundRepeat: "no-repeat", backgroundSize: "contain", backgroundPosition: "center" }}
                 />
               </div>
             )}
+
+            {/* 颜色设置 */}
+            <div className="border-t border-gray-100 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">颜色设置</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { key: "hero.titleColor", label: "标题颜色", default: "#111827" },
+                  { key: "hero.subtitleColor", label: "副标题颜色", default: "#6B7280" },
+                  { key: "hero.ctaBgColor", label: "按钮背景色", default: "#2563EB" },
+                  { key: "hero.ctaTextColor", label: "按钮文字色", default: "#FFFFFF" },
+                ].map(({ key, label, default: def }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={(editedContent.hero as any)[key.split(".")[1]] || def}
+                        onChange={(e) => updateField(key, e.target.value)}
+                        className="w-10 h-10 rounded border border-gray-200 cursor-pointer p-0.5"
+                      />
+                      <input
+                        type="text"
+                        value={(editedContent.hero as any)[key.split(".")[1]] || ""}
+                        onChange={(e) => updateField(key, e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-mono"
+                        placeholder={def}
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -515,9 +550,9 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                             type="button"
                             onClick={() => removeCourseFeature(ci, fi)}
                             className="text-red-400 hover:text-red-600 text-sm"
-                          >
-                            删除
-                          </button>
+                         >
+                           删除
+                        </button>
                         )}
                       </div>
                     ))}
@@ -559,7 +594,7 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                             value={teacher.name}
                             onChange={(e) => updateTeacher(ci, ti, "name", e.target.value)}
                             className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm"
-                            placeholder="教师姓名"
+                  placeholder="教师姓名"
                           />
                         </div>
                         <div>
@@ -667,6 +702,24 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none"
               />
             </div>
+            <ImageUploader
+              label="关于我们配图"
+              value={editedContent.about.image}
+              onChange={(base64) => updateField("about.image", base64)}
+            />
+            {editedContent.about.image && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">图片预览</label>
+                <img
+                  src={editedContent.about.image}
+                  alt="关于我们配图预览"
+                  className="w-full max-w-md aspect-square object-cover rounded-lg border border-gray-200"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -690,6 +743,28 @@ export default function ContentEditor({ loaderData, actionData }: Route.Componen
                   />
                 </div>
               ))}
+            </div>
+            <div className="border-t border-gray-100 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">地图展示</h4>
+              <ImageUploader
+                label="地图图片"
+                value={editedContent.contact.mapImage}
+                onChange={(base64) => updateField("contact.mapImage", base64)}
+                previewFit="contain"
+              />
+              {editedContent.contact.mapImage && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">地图预览</label>
+                  <img
+                    src={editedContent.contact.mapImage}
+                    alt="地图预览"
+                    className="w-full max-w-md aspect-[4/3] object-contain rounded-lg border border-gray-200"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
